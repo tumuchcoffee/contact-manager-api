@@ -14,7 +14,11 @@ namespace ContactManagerAPI.Controllers
 		public ActionResult<IEnumerable<Contact>> GetAllContacts()
 		{
 			// Implementation would go here
-			return Ok(new List<Contact>()); // Placeholder return
+			return Ok(new List<Contact>()
+			{
+				new Contact(),
+				new Contact()
+			}); // Placeholder return
 		}
 
 		// GET api/contacts/getcontactbyid
