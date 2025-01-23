@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ContactManager.Domain;
+using ContactManager.Service;
+using ContactManagerAPI.Extensions;
 
 namespace ContactManagerAPI.Controllers
 {
@@ -8,41 +10,87 @@ namespace ContactManagerAPI.Controllers
 	[Route("api/contacts")]
 	public class ContactController : ControllerBase
 	{
+		private IContactService _contactService;
+
+		public ContactController(IContactService contactService)
+		{
+			_contactService = contactService;
+		}
 
 		// GET api/contacts/getallcontacts
 		[HttpGet("getallcontacts")]
-		public ActionResult<IEnumerable<Contact>> GetAllContacts()
+		public async Task<ActionResult<GetAllResponse>> GetAllContacts()
 		{
-			// Implementation would go here
-			return Ok(new List<Contact>()
+			var response = new GetAllResponse();
+
+			try
 			{
-				new Contact(),
-				new Contact()
-			}); // Placeholder return
+				response.Result = await _contactService.GetAllContactsAsync();
+			}
+			catch (Exception ex) 
+			{ 
+				response.HasError = true;
+				response.Exception = ex.Message;
+			}
+
+			return Ok(response);
 		}
 
 		// GET api/contacts/getcontactbyid
 		[HttpGet("getcontactbyid")]
-		public ActionResult<Contact> GetContactById(string id)
+		public async Task<ActionResult<GetByIdResponse>> GetContactById(string id)
 		{
-			// Implementation would go here
-			return Ok(new Contact { Id = id }); // Placeholder return
+			var response = new GetByIdResponse();
+
+			try
+			{
+				response.Result = await _contactService.GetContactByIdAsync(id);
+			}
+			catch (Exception ex)
+			{
+				response.HasError = true;
+				response.Exception = ex;
+			}
+
+			return Ok(response);
 		}
 
 		// POST api/contacts/createcontact
 		[HttpPost("createcontact")]
-		public ActionResult<Contact> CreateContact([FromBody] Contact contact)
+		public async Task<ActionResult<CreateResponse>> CreateContact([FromBody] Contact contact)
 		{
-			// Implementation would go here
-			return CreatedAtAction(nameof(GetContactById), new { id = contact.Id }, contact);
+			var response = new CreateResponse();
+
+			try
+			{
+				response.Result = await _contactService.CreateContactAsync(contact);
+			}
+			catch (Exception ex)
+			{
+				response.HasError = true;
+				response.Exception = ex;
+			}
+
+			return Ok(response);
 		}
 
 		// PUT api/contacts/updatecontact
 		[HttpPut("updatecontact")]
-		public ActionResult UpdateContact([FromBody] Contact contact)
+		public async Task<ActionResult<UpdateResponse>> UpdateContact([FromBody] Contact contact)
 		{
-			// Implementation would go here
-			return NoContent(); // Assuming update was successful
+			var response = new UpdateResponse();
+
+			try
+			{
+				response.Result = await _contactService.UpdateContactAsync(contact);
+			}
+			catch (Exception ex)
+			{
+				response.HasError = true;
+				response.Exception = ex;
+			}
+
+			return Ok(response);
 		}
 	}
 }

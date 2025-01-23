@@ -8,12 +8,14 @@ using Elastic.Clients.Elasticsearch;
 
 namespace ContactManager.Service
 {
-	public class ContactService
+	public class ContactService : IContactService
 	{
 		private readonly ElasticDataLayer<Contact> _elasticDataLayer;
+		private readonly Uri elasticsearchUri;
 
-		public ContactService(Uri elasticsearchUri)
+		public ContactService()
 		{
+			elasticsearchUri = new Uri("http://localhost:9200");
 			_elasticDataLayer = new ElasticDataLayer<Contact>(elasticsearchUri, "contacts");
 		}
 
@@ -23,14 +25,7 @@ namespace ContactManager.Service
 		/// <returns>A task that represents the asynchronous operation. The task result contains a list of contacts.</returns>
 		public async Task<List<Contact>> GetAllContactsAsync()
 		{
-			var searchResponse = await _elasticDataLayer.SearchAsync("{ 'query': { 'match_all': {} } }");
-
-			if (!searchResponse.IsValidResponse)
-			{
-				throw new Exception($"Elasticsearch search failed: {searchResponse.DebugInformation}");
-			}
-
-			return searchResponse.Documents.ToList();
+			return await _elasticDataLayer.GetAllContacts();
 		}
 
 		/// <summary>
@@ -57,16 +52,14 @@ namespace ContactManager.Service
 		/// <returns>A task that represents the asynchronous operation. The task result contains the contact with its ID assigned by Elasticsearch.</returns>
 		public async Task<Contact> CreateContactAsync(Contact contact)
 		{
-			var response = await _elasticDataLayer.IndexDocumentAsync(contact);
+			var validator = new ContactValidator();
+			var results = validator.Validate(contact);
 
-			if (!response.IsValidResponse)
-			{
-				throw new Exception($"Failed to create contact: {response.DebugInformation}");
+			if (!results.IsValid) {
+				throw new Exception("Contact failed validation.");
 			}
 
-			// Update the contact with the ID returned by Elasticsearch
-			contact.Id = response.Id;
-			return contact;
+			return await _elasticDataLayer.CreateContact(contact);
 		}
 
 		/// <summary>
